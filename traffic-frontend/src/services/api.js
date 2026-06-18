@@ -2,7 +2,7 @@ import dashboardMock from './mocks/dashboard.json';
 import predictMock from './mocks/predict.json';
 import routeMock from './mocks/route.json';
 
-const USE_MOCK = true; 
+const USE_MOCK = false; 
 const BASE_URL = 'https://payal-12-astram-traffic-api.hf.space'; 
 
 export const getDashboard = async () => {
