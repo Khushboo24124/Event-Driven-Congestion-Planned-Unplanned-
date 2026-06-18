@@ -1,0 +1,10 @@
+{
+  "incident_id": "INC-001",
+  "congestion_severity": "High",
+  "computed_eis": 85.0,
+  "risk_tier": "High",
+  "expected_delay_minutes": 35,
+  "recovery_duration_minutes": 90,
+  "latitude": 12.9716,
+  "longitude": 77.5946
+}

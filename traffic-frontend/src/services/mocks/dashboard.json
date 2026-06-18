@@ -1,0 +1,10 @@
+{
+  "active_incidents": 5,
+  "avg_eis": 61.2,
+  "total_personnel_deployed": 32,
+  "incidents": [
+    { "incident_id": "INC-001", "latitude": 12.9716, "longitude": 77.5946, "severity": "High", "eis": 85.0 },
+    { "incident_id": "INC-002", "latitude": 12.9352, "longitude": 77.6245, "severity": "Medium", "eis": 45.0 },
+    { "incident_id": "INC-003", "latitude": 12.9580, "longitude": 77.6410, "severity": "Low", "eis": 22.0 }
+  ]
+}
