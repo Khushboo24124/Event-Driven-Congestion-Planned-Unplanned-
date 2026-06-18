@@ -7,7 +7,7 @@ const SEVERITY_COLOR = {
   Low: '#22c55e'
 };
 
-export default function TrafficMap({ incidents = [], diversionRoute = null }) {
+export default function TrafficMap({ incidents = [], diversionRoute = null, onSelectIncident }) {
   const defaultCenter = [12.9716, 77.5946];
 
   return (
@@ -26,6 +26,12 @@ export default function TrafficMap({ incidents = [], diversionRoute = null }) {
           color="#fff"
           weight={2}
           fillOpacity={0.85}
+          // Day 2 Feature: Click event capture karne ke liye
+          eventHandlers={{
+            click: () => {
+              if (onSelectIncident) onSelectIncident(inc);
+            },
+          }}
         >
           <Popup>
             <div className="text-gray-900 p-1">
