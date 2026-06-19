@@ -10,18 +10,42 @@ const SEVERITY_COLOR = {
 export default function TrafficMap({ incidents = [], diversionRoute = null, onSelectIncident, isRainMode }) {
   const defaultCenter = [12.9716, 77.5946];
   
-  // 🔀 State to handle active dashboard local diversions
   const [activeDiversionId, setActiveDiversionId] = useState(null);
+  const [realRoadPath, setRealRoadPath] = useState([]); // Asli sadak ka path store karega
+  const [isRouting, setIsRouting] = useState(false); // Loading state
 
-  // Hardcoded real-world type coordinates offset matrix (Bengaluru simulation bypass lines)
-  const generateBypassPath = (lat, lng) => {
-    return [
-      [lat, lng],
-      [lat + 0.003, lng + 0.005],
-      [lat + 0.006, lng + 0.002],
-      [lat + 0.004, lng - 0.004],
-      [lat, lng]
-    ];
+  // 🌍 OSRM API CALL: Asli road route nikalne ke liye
+  const fetchRealRoute = async (lat, lng, incidentId) => {
+    setActiveDiversionId(incidentId);
+    setIsRouting(true);
+    setRealRoadPath([]); // Purana route clear karo
+
+    try {
+      // Hum incident ke aas-paas 3 points banayenge bypass ke liye
+      // OSRM format: Longitude, Latitude chahiye hota hai
+      const startPoint = `${lng - 0.008},${lat}`; // Thoda peeche
+      const viaPoint = `${lng},${lat + 0.008}`;   // Side se bypass
+      const endPoint = `${lng + 0.008},${lat}`;   // Thoda aage wapas milna
+
+      // OSRM Free API Call
+      const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${startPoint};${viaPoint};${endPoint}?geometries=geojson`);
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        // OSRM coordinates [lng, lat] deta hai, Leaflet ko [lat, lng] chahiye
+        const routeCoords = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+        setRealRoadPath(routeCoords);
+      }
+    } catch (error) {
+      console.error("Route fetch failed:", error);
+    } finally {
+      setIsRouting(false);
+    }
+  };
+
+  const clearDiversion = () => {
+    setActiveDiversionId(null);
+    setRealRoadPath([]);
   };
 
   return (
@@ -32,7 +56,6 @@ export default function TrafficMap({ incidents = [], diversionRoute = null, onSe
       />
 
       {incidents.map((inc) => {
-        // 🌧️ Dynamic Severity Factor under heavy rain simulation
         let effectiveSeverity = inc.severity;
         let adjustedEis = inc.eis;
         
@@ -46,44 +69,44 @@ export default function TrafficMap({ incidents = [], diversionRoute = null, onSe
           <CircleMarker
             key={inc.incident_id}
             center={[inc.latitude, inc.longitude]}
-            radius={isRainMode && effectiveSeverity === 'High' ? 15 : 12} // Rain me red icons pulsed lagte hain
+            radius={isRainMode && effectiveSeverity === 'High' ? 15 : 12}
             fillColor={SEVERITY_COLOR[effectiveSeverity] || '#888'}
-            color={isRainMode ? "#3b82f6" : "#fff"} // Blue borders in rain mode
+            color={isRainMode ? "#3b82f6" : "#fff"}
             weight={2}
             fillOpacity={0.85}
             eventHandlers={{
               click: () => {
-                // Update parent component node telemetry panel
                 if (onSelectIncident) {
-                  onSelectIncident({
-                    ...inc,
-                    severity: effectiveSeverity,
-                    eis: adjustedEis
-                  });
+                  onSelectIncident({ ...inc, severity: effectiveSeverity, eis: adjustedEis });
                 }
               },
             }}
           >
             <Popup>
-              <div className="text-gray-900 p-1 min-w-[180px] font-sans">
+              <div className="text-gray-900 p-1 min-w-45 font-sans">
                 <p className="font-bold text-sm border-b pb-1 mb-1 text-slate-800">{inc.incident_id}</p>
                 <p className="text-xs mt-1"><b>Cause:</b> {inc.cause || "General Breakdown"}</p>
                 <p className="text-xs mt-0.5"><b>Severity:</b> <span style={{ color: SEVERITY_COLOR[effectiveSeverity], fontWeight: 'bold' }}>{effectiveSeverity}</span></p>
                 <p className="text-xs mt-0.5"><b>EIS Impact Score:</b> {adjustedEis}/100</p>
                 
-                {/* 🔀 FEATURE 1: ROUTE DIVERSION PROTOCOL ACTION BUTTON */}
                 {effectiveSeverity === 'High' && (
                   <div className="mt-2.5 pt-2 border-t border-gray-200">
-                    <button
-                      onClick={() => setActiveDiversionId(activeDiversionId === inc.incident_id ? null : inc.incident_id)}
-                      className={`w-full text-[10px] font-bold py-1 px-2 rounded-md transition duration-150 shadow-xs cursor-pointer ${
-                        activeDiversionId === inc.incident_id 
-                          ? 'bg-red-600 hover:bg-red-700 text-white' 
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                      }`}
-                    >
-                      {activeDiversionId === inc.incident_id ? '🛑 Deactivate Diversion' : '🔀 Activate Diversion'}
-                    </button>
+                    {activeDiversionId === inc.incident_id ? (
+                       <button
+                         onClick={clearDiversion}
+                         className="w-full text-[10px] font-bold py-1 px-2 rounded-md bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                       >
+                         🛑 Clear Diversion
+                       </button>
+                    ) : (
+                       <button
+                         onClick={() => fetchRealRoute(inc.latitude, inc.longitude, inc.incident_id)}
+                         disabled={isRouting}
+                         className={`w-full text-[10px] font-bold py-1 px-2 rounded-md transition duration-150 shadow-xs ${isRouting ? 'bg-gray-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'}`}
+                       >
+                         {isRouting ? '🔄 Calculating Route...' : '🔀 Activate Diversion'}
+                       </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -92,27 +115,23 @@ export default function TrafficMap({ incidents = [], diversionRoute = null, onSe
         );
       })}
 
-      {/* Default Global API Pipeline route logic (Unchanged) */}
+      {/* Global API Pipeline Route (Unchanged) */}
       {diversionRoute && !activeDiversionId && (
         <Polyline positions={diversionRoute} color="#22c55e" weight={6} opacity={0.8} dashArray="10, 10" />
       )}
 
-      {/* 🔥 NEW FEATURE 1: DYNAMIC ALTERNATE LOCAL DIVERSION DRAW ENGINE */}
-      {activeDiversionId && (() => {
-        const targetIncident = incidents.find(i => i.incident_id === activeDiversionId);
-        if (!targetIncident) return null;
-        
-        const generatedBypass = generateBypassPath(targetIncident.latitude, targetIncident.longitude);
-        return (
-          <Polyline 
-            positions={generatedBypass} 
-            color="#10b981" 
-            weight={6} 
-            opacity={0.9} 
-            dashArray="8, 12" 
-          />
-        );
-      })()}
+      {/* 🔥 THE REAL ROAD DIVERSION PATH */}
+      {activeDiversionId && realRoadPath.length > 0 && (
+        <Polyline 
+          positions={realRoadPath} 
+          color="#10b981" 
+          weight={6} 
+          opacity={0.9} 
+          dashArray="10, 15" 
+          lineCap="round"
+          lineJoin="round"
+        />
+      )}
     </MapContainer>
   );
 }
