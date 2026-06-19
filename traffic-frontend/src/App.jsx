@@ -344,25 +344,97 @@ export default function App() {
             </div>
           )}
 
-          {/* 📊 VIEW E: ANALYTICS REPORTS */}
+         {/* 📊 VIEW E: ANALYTICS REPORTS */}
           {activeTab === 'reports' && (
-            <div className="w-full h-full p-6 overflow-y-auto space-y-6 max-w-4xl">
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-wider">📊 Analytics Dashboard Logs</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-                <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl space-y-2">
-                  <p className="text-indigo-400 font-bold uppercase tracking-wider text-[10px]">Corridor Jam Breakdown</p>
-                  <div className="space-y-1.5 pt-2">
-                    <p>🛣️ Silk Board Axis: <span className="text-red-400 font-bold">Critical Stress (82%)</span></p>
-                    <p>className="text-gray-400"🛣️ MG Road Outer Ring: <span className="text-orange-400 font-bold">Medium Weight (54%)</span></p>
-                    <p>🛣️ Hebbal Flyover Grid: <span className="text-emerald-400 font-bold">Normal Loading (28%)</span></p>
+            <div className="w-full h-full p-6 overflow-y-auto space-y-6 max-w-5xl mx-auto">
+              <h2 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span>📊</span> Post-Event Analytics & Learning (FR-8)
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Visual Bar Chart: Corridor Jam Breakdown */}
+                <div className="bg-gray-900/80 border border-gray-800 p-5 rounded-xl shadow-lg">
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-5">Corridor Congestion Frequency</p>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="text-gray-300 font-bold">Silk Board Axis</span>
+                        <span className="text-red-400 font-black">82%</span>
+                      </div>
+                      <div className="w-full bg-gray-950 rounded-full h-2 border border-gray-800">
+                        <div className="bg-gradient-to-r from-red-600 to-red-400 h-1.5 rounded-full" style={{ width: '82%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="text-gray-300 font-bold">MG Road Outer Ring</span>
+                        <span className="text-orange-400 font-black">54%</span>
+                      </div>
+                      <div className="w-full bg-gray-950 rounded-full h-2 border border-gray-800">
+                        <div className="bg-gradient-to-r from-orange-600 to-orange-400 h-1.5 rounded-full" style={{ width: '54%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="text-gray-300 font-bold">Hebbal Flyover Grid</span>
+                        <span className="text-emerald-400 font-black">28%</span>
+                      </div>
+                      <div className="w-full bg-gray-950 rounded-full h-2 border border-gray-800">
+                        <div className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-1.5 rounded-full" style={{ width: '28%' }}></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl space-y-2">
-                  <p className="text-indigo-400 font-bold uppercase tracking-wider text-[10px]">ML Core Diagnostics Accuracy</p>
-                  <p className="text-gray-400 mt-2">CatBoost Model Version: <span className="text-white font-bold">v2.1.4-production</span></p>
-                  <p className="text-gray-400">Mean Absolute Error (MAE): <span className="text-emerald-400 font-bold">0.034 EIS</span></p>
-                  <p className="text-gray-400">Cloud Serverless Database: <span className="text-emerald-400 font-bold">Neon PostgreSQL Online</span></p>
+
+                {/* FR-8: Predicted vs Actual Recovery Time */}
+                <div className="bg-gray-900/80 border border-gray-800 p-5 rounded-xl shadow-lg">
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-4">Predicted vs Actual Clearance Time</p>
+                  <div className="space-y-4 font-mono mt-2">
+                     <div className="flex items-center justify-between border-b border-gray-800/60 pb-3">
+                       <span className="text-[11px] text-gray-400 font-bold">INC-2026-001 <span className="text-red-400">(High)</span></span>
+                       <div className="text-right flex gap-4">
+                         <p className="text-[10px] text-gray-500">AI Est: <span className="text-white font-bold text-xs block">45 min</span></p>
+                         <p className="text-[10px] text-gray-500">Actual: <span className="text-emerald-400 font-bold text-xs block">42 min</span></p>
+                       </div>
+                     </div>
+                     <div className="flex items-center justify-between border-b border-gray-800/60 pb-3">
+                       <span className="text-[11px] text-gray-400 font-bold">INC-2026-089 <span className="text-red-500">(Critical)</span></span>
+                       <div className="text-right flex gap-4">
+                         <p className="text-[10px] text-gray-500">AI Est: <span className="text-white font-bold text-xs block">120 min</span></p>
+                         <p className="text-[10px] text-gray-500">Actual: <span className="text-red-400 font-bold text-xs block">145 min</span></p>
+                       </div>
+                     </div>
+                     <div className="flex items-center justify-between">
+                       <span className="text-[11px] text-gray-400 font-bold">INC-2026-102 <span className="text-orange-400">(Medium)</span></span>
+                       <div className="text-right flex gap-4">
+                         <p className="text-[10px] text-gray-500">AI Est: <span className="text-white font-bold text-xs block">30 min</span></p>
+                         <p className="text-[10px] text-gray-500">Actual: <span className="text-emerald-400 font-bold text-xs block">28 min</span></p>
+                       </div>
+                     </div>
+                  </div>
                 </div>
+
+                {/* ML Core Diagnostics */}
+                <div className="bg-gray-900/80 border border-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">CatBoost ML Diagnostics</p>
+                    <p className="text-xs text-gray-400 mt-1">Production Model <span className="text-indigo-300 font-mono font-bold bg-indigo-900/40 px-2 py-0.5 rounded ml-1 border border-indigo-500/30">v2.1.4</span></p>
+                    <p className="text-[10px] text-gray-500 mt-1">Database: Neon PostgreSQL Serverless</p>
+                  </div>
+                  <div className="flex gap-8 text-center bg-gray-950/50 p-3 rounded-lg border border-gray-800/50">
+                    <div>
+                      <p className="text-2xl font-black text-emerald-400">0.034</p>
+                      <p className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5">Mean Absolute Error (EIS)</p>
+                    </div>
+                    <div className="w-px bg-gray-800"></div>
+                    <div>
+                      <p className="text-2xl font-black text-blue-400">99.8%</p>
+                      <p className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5">Cloud Pipeline Uptime</p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
