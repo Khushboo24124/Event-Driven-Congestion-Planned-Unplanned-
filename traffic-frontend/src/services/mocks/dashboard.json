@@ -1,10 +1,14 @@
 {
   "active_incidents": 5,
-  "avg_eis": 61.2,
+  "critical_incidents": 1,
+  "avg_eis": 76.0,
   "total_personnel_deployed": 32,
+  "last_updated": "2026-06-19T22:45:00",
   "incidents": [
-    { "incident_id": "INC-001", "latitude": 12.9716, "longitude": 77.5946, "severity": "High", "eis": 85.0 },
-    { "incident_id": "INC-002", "latitude": 12.9352, "longitude": 77.6245, "severity": "Medium", "eis": 45.0 },
-    { "incident_id": "INC-003", "latitude": 12.9580, "longitude": 77.6410, "severity": "Low", "eis": 22.0 }
+    { "incident_id": "INC-2026-0001", "corridor": "MG Road", "location": "MG Road Junction", "latitude": 12.9756, "longitude": 77.6068, "severity": "High", "eis": 72.5, "cause": "Multi-Vehicle Collision" },
+    { "incident_id": "INC-2026-0002", "corridor": "Silk Board", "location": "Silk Board Junction", "latitude": 12.9172, "longitude": 77.6228, "severity": "Medium", "eis": 45.0, "cause": "Heavy Water Accumulation" },
+    { "incident_id": "INC-2026-0003", "corridor": "Hebbal", "location": "Hebbal Flyover", "latitude": 13.0358, "longitude": 77.5970, "severity": "Critical", "eis": 88.0, "cause": "Structural Crack Overpass" },
+    { "incident_id": "INC-2026-0004", "corridor": "Whitefield", "location": "Whitefield Main Rd", "latitude": 12.9698, "longitude": 77.7500, "severity": "Low", "eis": 22.0, "cause": "Stalled KSRTC Bus" },
+    { "incident_id": "INC-2026-0005", "corridor": "Outer Ring Rd", "location": "Marathahalli Bridge", "latitude": 12.9569, "longitude": 77.7011, "severity": "Medium", "eis": 51.0, "cause": "Waterlogging Gridlock" }
   ]
 }

@@ -1,0 +1,8 @@
+{
+  "incidents": [
+    { "incident_id": "INC-2026-0001", "location": "MG Road Junction", "severity": "High", "eis": 72.5, "closure_status": "partial", "personnel_count": 8, "barricading_units": 4, "dispatched": false, "cause": "Multi-Vehicle Collision" },
+    { "incident_id": "INC-2026-0002", "location": "Silk Board", "severity": "Medium", "eis": 45.0, "closure_status": "none", "personnel_count": 5, "barricading_units": 0, "dispatched": true, "cause": "Heavy Water Accumulation" },
+    { "incident_id": "INC-2026-0003", "location": "Hebbal Flyover", "severity": "Critical", "eis": 88.0, "closure_status": "full", "personnel_count": 12, "barricading_units": 7, "dispatched": false, "cause": "Structural Crack Overpass" },
+    { "incident_id": "INC-2026-0004", "location": "Whitefield Main Road", "severity": "Low", "eis": 22.0, "closure_status": "none", "personnel_count": 2, "barricading_units": 0, "dispatched": false, "cause": "Stalled KSRTC Bus" }
+  ]
+}
