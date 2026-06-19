@@ -2,23 +2,37 @@ import React, { useEffect, useState } from 'react';
 import TrafficMap from './components/TrafficMap';
 import EISGauge from './components/EISGauge';
 import IncidentCard from './components/IncidentCard';
+import AlertBanner from './components/AlertBanner';
 import { getDashboard, getRoute, getPredict } from './services/api';
 
+// 📊 Plotly Imports
+import Plot from 'react-plotly.js';
+import reportsData from './mocks/reports.json';
+
+// Helper function for Live Feed timestamp
+const timeAgo = (timestamp) => {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  return `${Math.floor(mins / 60)} hr ago`;
+};
+
 export default function App() {
-  // Navigation State based on reference image tabs
+  // Navigation State
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Existing States (Surakshit)
+  // Existing Pipeline States
   const [data, setData] = useState(null);
   const [routeData, setRouteData] = useState(null);
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // New Day 3 States
+  // Day 3 States (Weather & Refresh)
   const [isRainMode, setIsRainMode] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
 
-  // Form State for Live ML Prediction (Unchanged)
+  // Form State for Live ML Prediction
   const [formData, setFormData] = useState({
     event_type: 'unplanned',
     event_cause: 'accident',
@@ -27,6 +41,13 @@ export default function App() {
   });
   const [predictionResult, setPredictionResult] = useState(null);
   const [predicting, setPredicting] = useState(false);
+
+  // --- Live Systemic Alerts Engine State ---
+  const [liveAlerts, setLiveAlerts] = useState([
+    { id: "ALT-001", incident_id: "INC-2026-0003", location: "Hebbal Flyover", severity: "Critical", eis: 88.0, message: "Critical EIS detected — immediate rerouting triggered", timestamp: new Date().toISOString() },
+    { id: "ALT-002", incident_id: "INC-2026-0001", location: "MG Road Junction", severity: "High", eis: 72.5, message: "High risk incident — personnel dispatched", timestamp: new Date(Date.now() - 4 * 60000).toISOString() },
+    { id: "ALT-003", incident_id: "INC-2026-0002", location: "Silk Board", severity: "Medium", eis: 45.0, message: "Medium congestion building up", timestamp: new Date(Date.now() - 12 * 60000).toISOString() }
+  ]);
 
   // Core Pipeline Loader
   async function loadPipeline() {
@@ -53,7 +74,32 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle Form Submission to CatBoost Model (Unchanged)
+  // 8-Second Live Mock Alert Generator
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const demoLocations = ['Marathahalli Bridge', 'KR Puram', 'Electronic City', 'Yeshwantpur', 'Indiranagar 100ft Road'];
+      const demoSeverities = ['Low', 'Medium', 'High', 'Critical'];
+      const severity = demoSeverities[Math.floor(Math.random() * demoSeverities.length)];
+      
+      const newAlert = {
+        id: `ALT-${Date.now()}`,
+        incident_id: `INC-${Math.floor(Math.random() * 9000 + 1000)}`,
+        location: demoLocations[Math.floor(Math.random() * demoLocations.length)],
+        severity,
+        eis: Math.floor(Math.random() * 40) + (severity === 'Critical' ? 60 : 20),
+        message: severity === 'Critical' 
+          ? 'Critical EIS detected — immediate rerouting triggered' 
+          : 'New incident logged and under monitoring',
+        timestamp: new Date().toISOString()
+      };
+      
+      setLiveAlerts((prev) => [newAlert, ...prev].slice(0, 50)); 
+    }, 8000); 
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle Form Submission to CatBoost Model
   const handlePredictSubmit = async (e) => {
     e.preventDefault();
     setPredicting(true);
@@ -95,7 +141,7 @@ export default function App() {
       <div className="w-64 bg-gray-900 border-r border-gray-800 p-5 flex flex-col justify-between h-full z-20 shadow-2xl">
         <div className="space-y-6">
           <div>
-            <h1 className="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+            <h1 className="text-xl font-black tracking-wider text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-indigo-400">
               ASTraM COMMAND
             </h1>
             <p className="text-[9px] text-gray-500 font-mono tracking-widest mt-0.5">HYBRID SMART SYSTEM</p>
@@ -114,11 +160,11 @@ export default function App() {
                 onChange={() => setIsRainMode(!isRainMode)} 
                 className="sr-only peer"
               />
-              <div className="w-8 h-4 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-gray-500 after:rounded-full after:h-2 after:w-2 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white"></div>
+              <div className="w-8 h-4 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1 after:left-1 after:bg-gray-500 after:rounded-full after:h-2 after:w-2 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white"></div>
             </label>
           </div>
 
-          {/* NAVIGATION LINKS MATCHING REFERENCE IMAGE */}
+          {/* NAVIGATION LINKS */}
           <nav className="flex flex-col space-y-1">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
@@ -156,8 +202,13 @@ export default function App() {
       {/* 🖥️ DYNAMIC CONTENT PANEL CONTROLLER */}
       <div className="flex-1 h-full overflow-hidden flex flex-col bg-gray-950">
         
-        {/* TOP STAT STRIP (Unified look for all screens) */}
-        <div className="border-b border-gray-900 bg-gray-900/40 p-4 grid grid-cols-3 gap-4 max-h-[90px]">
+        {/* EMERGENCY ALERT BANNER */}
+        <div className="px-4 pt-4 pb-0 bg-gray-900/40">
+           <AlertBanner alerts={liveAlerts} />
+        </div>
+
+        {/* TOP STAT STRIP */}
+        <div className="border-b border-gray-900 bg-gray-900/40 p-4 pt-2 grid grid-cols-3 gap-4 max-h-22.5">
           <div>
             <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Active System Nodes</p>
             <p className="text-xl font-black text-white mt-0.5">{totalIncidentsCount} Locations</p>
@@ -177,14 +228,12 @@ export default function App() {
         {/* VIEW CONDITIONAL RENDERING */}
         <div className="flex-1 overflow-hidden relative">
           
-          {/* 🏠 VIEW A: DASHBOARD VIEW (Split look) */}
+          {/* 🏠 VIEW A: DASHBOARD VIEW */}
           {activeTab === 'dashboard' && (
             <div className="flex h-full w-full overflow-hidden">
-              {/* Left Lookup/Gauge column */}
               <div className="w-80 border-r border-gray-900 p-4 flex flex-col space-y-4 overflow-y-auto h-full bg-gray-950">
                 <EISGauge eis={calculatedAvgEis} isRainMode={isRainMode} />
                 
-                {/* Incident Lookup Table Panel */}
                 <div className="flex-1 flex flex-col border border-gray-800 rounded-xl bg-gray-900/30 overflow-hidden">
                   <div className="bg-gray-900/70 p-2.5 border-b border-gray-800 text-[10px] font-black uppercase tracking-wider text-gray-400">
                     Active Incidents Stream
@@ -196,11 +245,11 @@ export default function App() {
                         onClick={() => setSelectedIncident(inc)}
                         className={`p-2.5 cursor-pointer transition-colors flex justify-between items-center ${selectedIncident?.incident_id === inc.incident_id ? 'bg-indigo-950/30 text-indigo-400' : 'hover:bg-gray-900/40 text-gray-300'}`}
                       >
-                        <div className="truncate max-w-[150px]">
+                        <div className="truncate max-w-37.5">
                           <span className="font-bold text-white block">{inc.incident_id}</span>
                           <span className="text-[10px] text-gray-500 block truncate">{inc.location || 'Bengaluru Axis'}</span>
                         </div>
-                        <span className={`text-[9px] px-1.5 rounded font-bold uppercase ${inc.severity === 'high' || inc.severity === 'High' ? 'bg-red-950 text-red-400' : 'bg-orange-950 text-orange-400'}`}>
+                        <span className={`text-[9px] px-1.5 rounded font-bold uppercase ${inc.severity?.toLowerCase() === 'high' || inc.severity?.toLowerCase() === 'critical' ? 'bg-red-950 text-red-400' : 'bg-orange-950 text-orange-400'}`}>
                           {inc.severity}
                         </span>
                       </div>
@@ -209,7 +258,6 @@ export default function App() {
                 </div>
               </div>
               
-              {/* Right Map workspace */}
               <div className="flex-1 h-full bg-gray-900 relative">
                 <TrafficMap 
                   incidents={data?.incidents || []} 
@@ -230,7 +278,7 @@ export default function App() {
                 onSelectIncident={setSelectedIncident} 
                 isRainMode={isRainMode}
               />
-              <div className="absolute top-4 right-4 z-[1000] bg-gray-950/90 border border-gray-800 p-3 rounded-xl shadow-2xl max-w-[200px] font-mono text-[10px]">
+              <div className="absolute top-4 right-4 z-1000 bg-gray-950/90 border border-gray-800 p-3 rounded-xl shadow-2xl max-w-50 font-mono text-[10px]">
                 <p className="font-bold text-indigo-400 uppercase tracking-wider mb-1.5">Map Telemetry Layer</p>
                 <p className="text-gray-400">🟢 Live Hotspots: Active</p>
                 <p className="text-gray-400">🔀 OSRM Real Routing: Live</p>
@@ -239,11 +287,9 @@ export default function App() {
             </div>
           )}
 
-          {/* 👮‍♂️ VIEW C: COMMANDER OPERATIONS (With AI Predictor Integration) */}
+          {/* 👮‍♂️ VIEW C: COMMANDER OPERATIONS */}
           {activeTab === 'commander' && (
             <div className="w-full h-full p-5 overflow-y-auto grid grid-cols-1 lg:grid-cols-3 gap-5">
-              
-              {/* Left Column: AI Simulator Controls Form */}
               <div className="space-y-4 lg:col-span-1">
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
                   <h2 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">AI Predictor Core</h2>
@@ -314,7 +360,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right Column: Grid Layout of Deployable Task Force Incident Cards */}
               <div className="lg:col-span-2 space-y-3">
                 <h2 className="text-xs font-black text-gray-400 uppercase tracking-wider flex items-center gap-2">
                   <span>🚨</span> Deployment Task Force Recommended Actions
@@ -328,111 +373,135 @@ export default function App() {
             </div>
           )}
 
-          {/* 💬 VIEW D: LIVE NOTIFICATIONS NOTIFICATION FEED */}
+          {/* 💬 VIEW D: LIVE NOTIFICATIONS (Auto-Generating Feed) */}
           {activeTab === 'messages' && (
-            <div className="w-full h-full p-6 overflow-y-auto max-w-2xl mx-auto space-y-3 font-mono">
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-4">🚨 Systemic Log Feed History</h2>
-              {data?.incidents?.map((inc, index) => (
-                <div key={index} className="bg-gray-900/60 border border-gray-800 p-3.5 rounded-xl flex items-start gap-3">
-                  <span className="text-red-500">💥</span>
-                  <div className="text-xs space-y-0.5">
-                    <p className="text-gray-300 font-bold">Critical Event Stream Alert detected for <span className="text-indigo-400">{inc.incident_id}</span>.</p>
-                    <p className="text-gray-500 text-[11px]">Location corridor reports an active metric layer weight of <span className="text-red-400 font-bold">{inc.eis} EIS score</span> via {inc.cause || 'general jam'}.</p>
-                  </div>
-                </div>
-              ))}
+            <div className="w-full h-full p-6 overflow-y-auto max-w-4xl mx-auto text-white">
+              <div className="flex items-center gap-3 mb-6 border-b border-gray-800 pb-4">
+                <h1 className="text-sm font-black uppercase tracking-wider text-gray-300">Live Telemetry Alerts</h1>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                <span className="text-[10px] text-green-500 font-mono tracking-widest ml-auto bg-green-950/30 px-2 py-1 rounded border border-green-900/50">
+                  SYSTEMIC FEED: ACTIVE
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-3 font-mono">
+                {liveAlerts.map((alert) => {
+                  const s = alert.severity?.toLowerCase();
+                  const color = 
+                    s === 'critical' ? { bg: 'bg-red-950/30', text: 'text-red-400', border: 'border-red-900/50', dot: 'bg-red-500' } :
+                    s === 'high'     ? { bg: 'bg-orange-950/30', text: 'text-orange-400', border: 'border-orange-900/50', dot: 'bg-orange-500' } :
+                    s === 'medium'   ? { bg: 'bg-amber-950/30', text: 'text-amber-400', border: 'border-amber-900/50', dot: 'bg-amber-500' } :
+                                       { bg: 'bg-green-950/30', text: 'text-green-400', border: 'border-green-900/50', dot: 'bg-green-500' };
+
+                  return (
+                    <div key={alert.id} className={`${color.bg} ${color.border} border rounded-xl px-4 py-3 flex items-start gap-4 transition-all duration-500 animate-fadeIn`}>
+                      <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 shadow-[0_0_8px_currentColor] ${color.text} ${color.dot}`}></span>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <p className={`text-[11px] font-bold uppercase tracking-wider ${color.text}`}>
+                            {alert.severity} ALERT · EIS {alert.eis}
+                          </p>
+                          <p className="text-[10px] text-gray-500">{timeAgo(alert.timestamp)}</p>
+                        </div>
+                        <p className="text-xs text-gray-300 font-sans font-medium">{alert.message}</p>
+                        <p className="text-[10px] text-gray-500 mt-1.5">📍 {alert.location} <span className="mx-2">|</span> 🆔 {alert.incident_id}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-         {/* 📊 VIEW E: ANALYTICS REPORTS */}
+          {/* 📊 VIEW E: ANALYTICS REPORTS (WITH PLOTLY) */}
           {activeTab === 'reports' && (
-            <div className="w-full h-full p-6 overflow-y-auto space-y-6 max-w-5xl mx-auto">
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <div className="w-full h-full p-6 overflow-y-auto space-y-6 max-w-6xl mx-auto">
+              <h2 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                 <span>📊</span> Post-Event Analytics & Learning (FR-8)
               </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Visual Bar Chart: Corridor Jam Breakdown */}
-                <div className="bg-gray-900/80 border border-gray-800 p-5 rounded-xl shadow-lg">
-                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-5">Corridor Congestion Frequency</p>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="text-gray-300 font-bold">Silk Board Axis</span>
-                        <span className="text-red-400 font-black">82%</span>
-                      </div>
-                      <div className="w-full bg-gray-950 rounded-full h-2 border border-gray-800">
-                        <div className="bg-gradient-to-r from-red-600 to-red-400 h-1.5 rounded-full" style={{ width: '82%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="text-gray-300 font-bold">MG Road Outer Ring</span>
-                        <span className="text-orange-400 font-black">54%</span>
-                      </div>
-                      <div className="w-full bg-gray-950 rounded-full h-2 border border-gray-800">
-                        <div className="bg-gradient-to-r from-orange-600 to-orange-400 h-1.5 rounded-full" style={{ width: '54%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="text-gray-300 font-bold">Hebbal Flyover Grid</span>
-                        <span className="text-emerald-400 font-black">28%</span>
-                      </div>
-                      <div className="w-full bg-gray-950 rounded-full h-2 border border-gray-800">
-                        <div className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-1.5 rounded-full" style={{ width: '28%' }}></div>
-                      </div>
-                    </div>
-                  </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Corridor breakdown - Bar chart */}
+                <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-lg">
+                  <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Incidents by Corridor</p>
+                  <Plot
+                    data={[{
+                      x: reportsData.corridor_breakdown.map(d => d.corridor),
+                      y: reportsData.corridor_breakdown.map(d => d.incidents),
+                      type: 'bar',
+                      marker: { color: '#6366f1' } 
+                    }]}
+                    layout={{
+                      autosize: true,
+                      height: 250,
+                      margin: { t: 10, l: 30, r: 10, b: 30 },
+                      paper_bgcolor: 'transparent',
+                      plot_bgcolor: 'transparent',
+                      font: { color: '#9ca3af', size: 10 },
+                      xaxis: { gridcolor: '#1f2937' },
+                      yaxis: { gridcolor: '#1f2937' }
+                    }}
+                    config={{ displayModeBar: false, responsive: true }}
+                    style={{ width: '100%' }}
+                  />
                 </div>
 
-                {/* FR-8: Predicted vs Actual Recovery Time */}
-                <div className="bg-gray-900/80 border border-gray-800 p-5 rounded-xl shadow-lg">
-                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-4">Predicted vs Actual Clearance Time</p>
-                  <div className="space-y-4 font-mono mt-2">
-                     <div className="flex items-center justify-between border-b border-gray-800/60 pb-3">
-                       <span className="text-[11px] text-gray-400 font-bold">INC-2026-001 <span className="text-red-400">(High)</span></span>
-                       <div className="text-right flex gap-4">
-                         <p className="text-[10px] text-gray-500">AI Est: <span className="text-white font-bold text-xs block">45 min</span></p>
-                         <p className="text-[10px] text-gray-500">Actual: <span className="text-emerald-400 font-bold text-xs block">42 min</span></p>
-                       </div>
-                     </div>
-                     <div className="flex items-center justify-between border-b border-gray-800/60 pb-3">
-                       <span className="text-[11px] text-gray-400 font-bold">INC-2026-089 <span className="text-red-500">(Critical)</span></span>
-                       <div className="text-right flex gap-4">
-                         <p className="text-[10px] text-gray-500">AI Est: <span className="text-white font-bold text-xs block">120 min</span></p>
-                         <p className="text-[10px] text-gray-500">Actual: <span className="text-red-400 font-bold text-xs block">145 min</span></p>
-                       </div>
-                     </div>
-                     <div className="flex items-center justify-between">
-                       <span className="text-[11px] text-gray-400 font-bold">INC-2026-102 <span className="text-orange-400">(Medium)</span></span>
-                       <div className="text-right flex gap-4">
-                         <p className="text-[10px] text-gray-500">AI Est: <span className="text-white font-bold text-xs block">30 min</span></p>
-                         <p className="text-[10px] text-gray-500">Actual: <span className="text-emerald-400 font-bold text-xs block">28 min</span></p>
-                       </div>
-                     </div>
-                  </div>
+                {/* EIS trend - Line chart */}
+                <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-lg">
+                  <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">EIS Trend (Last 6 Days)</p>
+                  <Plot
+                    data={[{
+                      x: reportsData.eis_trend.map(d => d.date),
+                      y: reportsData.eis_trend.map(d => d.avg_eis),
+                      type: 'scatter',
+                      mode: 'lines+markers',
+                      line: { color: '#f59e0b', width: 3 }, 
+                      marker: { color: '#f59e0b', size: 8 }
+                    }]}
+                    layout={{
+                      autosize: true,
+                      height: 250,
+                      margin: { t: 10, l: 30, r: 10, b: 30 },
+                      paper_bgcolor: 'transparent',
+                      plot_bgcolor: 'transparent',
+                      font: { color: '#9ca3af', size: 10 },
+                      xaxis: { gridcolor: '#1f2937' },
+                      yaxis: { gridcolor: '#1f2937' }
+                    }}
+                    config={{ displayModeBar: false, responsive: true }}
+                    style={{ width: '100%' }}
+                  />
                 </div>
 
-                {/* ML Core Diagnostics */}
-                <div className="bg-gray-900/80 border border-gray-800 p-5 rounded-xl shadow-lg md:col-span-2 flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">CatBoost ML Diagnostics</p>
-                    <p className="text-xs text-gray-400 mt-1">Production Model <span className="text-indigo-300 font-mono font-bold bg-indigo-900/40 px-2 py-0.5 rounded ml-1 border border-indigo-500/30">v2.1.4</span></p>
-                    <p className="text-[10px] text-gray-500 mt-1">Database: Neon PostgreSQL Serverless</p>
-                  </div>
-                  <div className="flex gap-8 text-center bg-gray-950/50 p-3 rounded-lg border border-gray-800/50">
-                    <div>
-                      <p className="text-2xl font-black text-emerald-400">0.034</p>
-                      <p className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5">Mean Absolute Error (EIS)</p>
-                    </div>
-                    <div className="w-px bg-gray-800"></div>
-                    <div>
-                      <p className="text-2xl font-black text-blue-400">99.8%</p>
-                      <p className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5">Cloud Pipeline Uptime</p>
-                    </div>
-                  </div>
+                {/* Severity distribution - Pie chart */}
+                <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 lg:col-span-2 shadow-lg flex flex-col items-center">
+                  <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 w-full text-left">Severity Distribution (Monthly)</p>
+                  <Plot
+                    data={[{
+                      labels: reportsData.severity_distribution.map(d => d.severity),
+                      values: reportsData.severity_distribution.map(d => d.count),
+                      type: 'pie',
+                      hole: 0.4, 
+                      marker: { colors: ['#22c55e', '#f97316', '#ef4444', '#b91c1c'] },
+                      textinfo: 'label+percent',
+                      textfont: { color: '#fff', size: 11 }
+                    }]}
+                    layout={{
+                      autosize: true,
+                      height: 300,
+                      margin: { t: 10, l: 10, r: 10, b: 10 },
+                      paper_bgcolor: 'transparent',
+                      plot_bgcolor: 'transparent',
+                      showlegend: true,
+                      legend: { font: { color: '#9ca3af' }, orientation: 'h', y: -0.1 }
+                    }}
+                    config={{ displayModeBar: false, responsive: true }}
+                    style={{ width: '100%', maxWidth: '500px' }}
+                  />
                 </div>
 
               </div>
