@@ -1,20 +1,17 @@
 FROM python:3.10-slim
 
-# Create a non-root user matching Hugging Face specifications
-RUN useradd -m -u 1000 user
-USER user
-ENV PATH="/home/user/.local/bin:${PATH}"
-
 WORKDIR /app
 
-# Copy and install dependencies under user privileges
-COPY --chown=user requirements.txt .
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the rest of the application files securely
-COPY --chown=user . .
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
 
 EXPOSE 7860
 
-# CMD aligned with main.py entrypoint structure
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
