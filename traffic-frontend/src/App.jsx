@@ -40,11 +40,20 @@ function DynamicHeader({ activeTab, lastRefreshed }) {
   const currentNav = NAV_ITEMS.find(item => item.id === activeTab);
   return (
     <div className="flex items-center gap-4 bg-gray-900 px-4 py-3 border-b border-gray-800 shrink-0">
-      <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-xl font-black text-white shadow-lg shadow-indigo-500/20">A</div>
-        <div className="flex-col">
+      <div className="flex items-center gap-3">
+        {/* Same exact matching vector badge */}
+        <div className="w-8 h-8 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 100 100" className="w-full h-full text-indigo-500 drop-shadow-[0_0_6px_rgba(99,102,241,0.4)]">
+            <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" strokeWidth="3" />
+            <path d="M 15 35 Q 35 35 50 50 T 85 65" fill="none" stroke="currentColor" strokeWidth="2" />
+            <path d="M 35 15 Q 35 35 50 50 T 65 85" fill="none" stroke="currentColor" strokeWidth="2" />
+            <path d="M 50 63 C 40 53 35 45 35 39 A 8 8 0 0 1 50 34 A 8 8 0 0 1 65 39 C 65 45 60 53 50 63 Z" fill="#111827" stroke="currentColor" strokeWidth="2.5" />
+            <path d="M 38 43 H 43 L 46 36 L 49 50 L 52 40 L 54 45 H 62" fill="none" stroke="#c084fc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <div className="flex flex-col">
           <h1 className="text-[13px] font-black uppercase tracking-wider text-white">{currentNav ? currentNav.label : 'Dashboard'}</h1>
-          <p className="text-[9px] text-gray-500 font-mono tracking-widest mt-0.5">Command Context Desk</p>
+          <p className="text-[9px] text-gray-500 font-mono tracking-widest mt-0.5">EventPulse Intelligence Desk</p>
         </div>
       </div>
       <div className="w-px h-6 bg-gray-800 ml-auto mr-1"></div>
@@ -111,12 +120,10 @@ export default function App() {
         enrichedIncidents.forEach((inc, index) => {
           let c = inc.corridor;
           
-          // Agar database mein corridor khali hai, toh cause ya sample list se naam uthao
           if (!c || c === "undefined" || c === "Unknown") {
             c = inc.cause && inc.cause !== "undefined" ? `${inc.cause} Route` : sampleCorridors[index % sampleCorridors.length];
           }
           
-          // Underscores ko space se badlo aur CamelCase banao taaki graph mein sundar dikhe
           c = c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
           corridorCounts[c] = (corridorCounts[c] || 0) + 1;
@@ -158,7 +165,6 @@ export default function App() {
     const interval = setInterval(() => {
       if(!data?.incidents || data.incidents.length === 0) return;
       
-      // Random real location from database
       const randomInc = data.incidents[Math.floor(Math.random() * data.incidents.length)];
       const randomScore = Math.floor(Math.random() * 80) + 15;
       const { severity, hexColor } = normalizeSeverity(randomScore);
@@ -178,14 +184,13 @@ export default function App() {
 
   useEffect(() => {
     const titleMap = { dashboard: 'Dashboard', map: 'Full Map View', commander: 'Commander Ops', messages: 'Live Notifications', reports: 'Analytics Reports' };
-    document.title = `A | ${titleMap[activeTab] || 'Dashboard'}`;
+    document.title = `EventPulse AI | ${titleMap[activeTab] || 'Dashboard'}`;
   }, [activeTab]);
 
   const handleCommanderDispatch = (incidentId) => {
     setCommanderIncidents((prev) => prev.map((inc) => inc.incident_id === incidentId ? { ...inc, dispatched: true } : inc));
   };
 
-  // 🧠 ML INFERENCE TRIGGER
   const handlePredictSubmit = async (e) => {
     e.preventDefault();
     setPredicting(true);
@@ -204,7 +209,12 @@ export default function App() {
     }
   };
 
-  if (loading) return <div className="h-screen w-screen bg-gray-950 flex items-center justify-center text-white font-mono tracking-widest text-xs">SYNCHRONIZING SYSTEM...</div>;
+  if (loading) return (
+    <div className="h-screen w-screen bg-gray-950 flex flex-col gap-3 items-center justify-center text-white font-mono tracking-widest text-xs">
+      <span className="text-indigo-400 font-bold">⚡ EVENTPULSE AI</span>
+      <span>SYNCHRONIZING SYSTEM...</span>
+    </div>
+  );
 
   const calculatedAvgEis = isRainMode ? Math.min(99.4, ((data?.avg_eis || 76.0) + 18.4)) : (data?.avg_eis || 76.0);
   const totalIncidentsCount = data?.incidents?.length || 0;
