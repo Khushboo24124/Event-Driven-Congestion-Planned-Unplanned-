@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
+/* Yeh line ensure karegi ki container kabhi bhi 0px ka na ho */
 .leaflet-container {
-  height: 100%;
-  width: 100%;
+  height: 100vh !important; /* Screen ki poori height le */
+  width: 100% !important;   /* Screen ki poori width le */
+  min-height: 300px;       /* Mobile par kam se kam itni height zaroor ho */
 }
